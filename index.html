@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>성민안경 - 당신의 선명한 일상을 디자인합니다</title>
+    <title>성민안경 - 실시간 AI 시각 분석</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -12,10 +12,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; scroll-behavior: smooth; }
-        .hero-gradient { background: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.6)); }
         .tab-content { display: none; }
         .tab-content.active { display: grid; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        #ai-chat-modal { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(20px); opacity: 0; pointer-events: none; }
+        #ai-chat-modal.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        .chat-bubble { border-radius: 18px; padding: 12px 16px; margin-bottom: 8px; max-width: 85%; font-size: 14px; line-height: 1.5; }
+        .chat-ai { background-color: #f1f5f9; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .chat-user { background-color: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        
+        /* 실시간 화면 캡처용 숨김 캔버스 */
+        #hidden-canvas { display: none; }
+        #screen-video { display: none; }
+
+        .live-indicator { display: inline-flex; items-center; gap: 4px; color: #ef4444; font-size: 10px; font-weight: bold; }
+        .dot { width: 6px; height: 6px; background: #ef4444; border-radius: 50%; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body class="bg-white text-slate-900">
@@ -23,259 +36,222 @@
     <!-- --- HEADER --- -->
     <header id="main-header" class="fixed w-full z-50 transition-all duration-300 py-5">
         <div class="container mx-auto px-6 flex justify-between items-center">
-            <a href="#" class="text-2xl font-bold text-white transition-colors duration-300" id="logo">
-                성민안경
-            </a>
-            
-            <!-- Desktop Nav -->
+            <a href="#" class="text-2xl font-bold text-white transition-colors duration-300" id="logo">성민안경</a>
             <nav class="hidden md:flex space-x-10">
-                <a href="#about" class="nav-link text-sm font-medium text-white/90 hover:text-blue-400 transition-colors">소개</a>
-                <a href="#products" class="nav-link text-sm font-medium text-white/90 hover:text-blue-400 transition-colors">제품</a>
-                <a href="#services" class="nav-link text-sm font-medium text-white/90 hover:text-blue-400 transition-colors">서비스</a>
-                <a href="#location" class="nav-link text-sm font-medium text-white/90 hover:text-blue-400 transition-colors">예약/위치</a>
+                <a href="#about" class="nav-link text-sm font-medium text-white/90 hover:text-blue-400">소개</a>
+                <a href="#products" class="nav-link text-sm font-medium text-white/90 hover:text-blue-400">제품</a>
+                <a href="#services" class="nav-link text-sm font-medium text-white/90 hover:text-blue-400">서비스</a>
             </nav>
-
-            <!-- Mobile Toggle -->
-            <button class="md:hidden text-white" id="menu-btn">
-                <i data-lucide="menu" size="28"></i>
-            </button>
-        </div>
-
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden absolute top-full left-0 w-full bg-white shadow-xl py-6 px-6 flex flex-col space-y-4 md:hidden">
-            <a href="#about" class="text-lg font-medium text-slate-800">소개</a>
-            <a href="#products" class="text-lg font-medium text-slate-800">제품</a>
-            <a href="#services" class="text-lg font-medium text-slate-800">서비스</a>
-            <a href="#location" class="text-lg font-medium text-slate-800">예약/위치</a>
+            <button class="md:hidden text-white" id="menu-btn"><i data-lucide="menu"></i></button>
         </div>
     </header>
 
     <!-- --- HERO SECTION --- -->
-    <section class="relative h-[90vh] flex items-center justify-center overflow-hidden">
+    <section class="relative h-[85vh] flex items-center justify-center overflow-hidden">
         <div class="absolute inset-0 bg-slate-900">
-            <img 
-                src="https://images.unsplash.com/photo-1511499767350-a1591f6733ad?auto=format&fit=crop&q=80&w=2000" 
-                alt="안경을 쓴 인물" 
-                class="w-full h-full object-cover opacity-60"
-            />
+            <img src="https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?q=80&w=2070&auto=format&fit=crop" class="w-full h-full object-cover opacity-60" alt="안경 모델">
         </div>
         <div class="relative z-10 text-center px-6 max-w-4xl">
-            <h1 class="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-tight mb-8 drop-shadow-2xl">
-                당신의 선명한 일상을 <br />
-                <span class="text-blue-400">디자인합니다.</span> 성민안경
-            </h1>
-            <p class="text-lg md:text-xl text-white/90 mb-10 font-light">
-                시력을 넘어 스타일까지, 전문 안경사의 1:1 맞춤 컨설팅을 경험하세요.
-            </p>
-            <a href="#location" class="inline-block bg-blue-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-700 hover:scale-105 transition-all shadow-lg">
-                지금 예약하기
-            </a>
+            <h1 class="text-4xl md:text-6xl font-black text-white leading-tight mb-8">당신의 화면을 실시간으로<br><span class="text-blue-400">이해하는 AI 상담사.</span></h1>
+            <p class="text-lg text-white/90 mb-10">캡처할 필요 없이 화면 공유만으로 실시간 시각 문제를 진단받으세요.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="startLiveConsulting()" class="bg-blue-600 text-white px-10 py-4 rounded-full font-bold hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2 justify-center">
+                    <i data-lucide="video" size="20"></i> 실시간 화면 분석 시작
+                </button>
+            </div>
         </div>
     </section>
 
-    <!-- --- ABOUT US --- -->
-    <section id="about" class="py-24 bg-white">
-        <div class="container mx-auto px-6">
-            <div class="grid md:grid-cols-2 gap-16 items-center">
-                <div class="rounded-3xl overflow-hidden shadow-2xl">
-                    <img src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=1200" alt="안경사 전문 검안" class="w-full h-auto">
-                </div>
+    <!-- --- ✨ AI CHAT MODAL --- -->
+    <div id="ai-chat-modal" class="fixed bottom-6 right-6 w-[400px] max-w-[95vw] h-[600px] bg-white shadow-2xl rounded-3xl border border-slate-200 z-[100] flex flex-col overflow-hidden">
+        <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div id="live-status" class="hidden live-indicator"><span class="dot"></span> LIVE</div>
                 <div>
-                    <span class="text-blue-600 font-bold tracking-widest text-sm uppercase mb-4 block underline decoration-2 underline-offset-8">About Sungmin Optic</span>
-                    <h2 class="text-3xl md:text-4xl font-bold mb-8 leading-snug">
-                        정직한 가격과 전문성으로 <br />
-                        지역 주민의 신뢰를 쌓아갑니다.
-                    </h2>
-                    <div class="space-y-6 text-slate-600 leading-relaxed">
-                        <p>성민안경은 단순한 안경 판매를 넘어 고객님의 시생활 라이프스타일을 연구합니다. 대학병원급 장비를 통해 정밀한 검안 서비스를 제공합니다.</p>
-                        <ul class="space-y-4">
-                            <li class="flex items-center space-x-3"><i data-lucide="check-circle-2" class="text-blue-500"></i><span>10년 경력의 베테랑 안경사 상주</span></li>
-                            <li class="flex items-center space-x-3"><i data-lucide="check-circle-2" class="text-blue-500"></i><span>거품 없는 합리적인 정찰제</span></li>
-                            <li class="flex items-center space-x-3"><i data-lucide="check-circle-2" class="text-blue-500"></i><span>개인별 맞춤 정밀 피팅 서비스</span></li>
-                        </ul>
-                    </div>
+                    <h3 class="font-bold text-sm">✨ 성민 실시간 AI 분석가</h3>
+                    <p class="text-[10px] text-white/60" id="status-text">화면 공유를 시작해 주세요</p>
                 </div>
             </div>
+            <button onclick="toggleAIChat()" class="hover:bg-white/10 p-1 rounded-lg transition-all"><i data-lucide="x" size="20"></i></button>
         </div>
-    </section>
 
-    <!-- --- PRODUCTS --- -->
-    <section id="products" class="py-24 bg-slate-50">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold mb-4">Trend & Quality</h2>
-                <p class="text-slate-500">성민안경의 프리미엄 컬렉션</p>
-            </div>
+        <div id="chat-history" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2 bg-slate-50/50 text-sm">
+            <div class="chat-bubble chat-ai">안녕하세요! '실시간 화면 분석 시작' 버튼을 눌러 화면을 공유해 주시면, 제가 화면 속의 텍스트나 문제를 실시간으로 보고 답변해 드릴 수 있습니다.</div>
+        </div>
 
-            <!-- Tabs Nav -->
-            <div class="flex justify-center mb-12 bg-white p-2 rounded-2xl shadow-sm w-fit mx-auto border border-slate-200">
-                <button onclick="showTab('frames')" class="tab-btn active flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all bg-blue-600 text-white" id="btn-frames">
-                    <i data-lucide="glasses" size="18"></i><span>안경테</span>
-                </button>
-                <button onclick="showTab('sunglasses')" class="tab-btn flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all text-slate-500 hover:bg-slate-100" id="btn-sunglasses">
-                    <i data-lucide="sun" size="18"></i><span>선글라스</span>
-                </button>
-                <button onclick="showTab('lenses')" class="tab-btn flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all text-slate-500 hover:bg-slate-100" id="btn-lenses">
-                    <i data-lucide="shield-check" size="18"></i><span>기능성 렌즈</span>
+        <div class="p-4 bg-white border-t border-slate-100">
+            <div class="flex gap-2 bg-slate-100 p-2 rounded-2xl items-center">
+                <input type="text" id="ai-input" placeholder="보고 있는 화면에 대해 질문하세요..." class="bg-transparent border-none outline-none flex-1 px-2 text-sm">
+                <button onclick="askGemini()" id="send-btn" class="bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-blue-700 transition-all">
+                    <i data-lucide="send" size="18"></i>
                 </button>
             </div>
-
-            <!-- Tab Content -->
-            <div id="frames" class="tab-content active grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all border border-slate-100">
-                    <div class="aspect-square bg-slate-100 rounded-2xl mb-4 flex items-center justify-center text-slate-300"><i data-lucide="glasses" size="64"></i></div>
-                    <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">NEW</span>
-                    <h3 class="font-bold mt-2">티타늄 라운드 프레임</h3>
-                    <p class="text-blue-600 font-bold">120,000원</p>
-                </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all border border-slate-100">
-                    <div class="aspect-square bg-slate-100 rounded-2xl mb-4 flex items-center justify-center text-slate-300"><i data-lucide="glasses" size="64"></i></div>
-                    <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">HOT</span>
-                    <h3 class="font-bold mt-2">투명 뿔테 안경</h3>
-                    <p class="text-blue-600 font-bold">89,000원</p>
-                </div>
-                <!-- ... 추가 아이템 생략 ... -->
-            </div>
-
-            <div id="sunglasses" class="tab-content grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all border border-slate-100">
-                    <div class="aspect-square bg-slate-100 rounded-2xl mb-4 flex items-center justify-center text-slate-300"><i data-lucide="sun" size="64"></i></div>
-                    <h3 class="font-bold mt-2 text-center">프리미엄 폴라로이드</h3>
-                </div>
-            </div>
-
-            <div id="lenses" class="tab-content grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all border border-slate-100">
-                    <div class="aspect-square bg-slate-100 rounded-2xl mb-4 flex items-center justify-center text-slate-300"><i data-lucide="shield-check" size="64"></i></div>
-                    <h3 class="font-bold mt-2 text-center">블루라이트 차단 렌즈</h3>
-                </div>
-            </div>
         </div>
-    </section>
+    </div>
 
-    <!-- --- SERVICES --- -->
-    <section id="services" class="py-24 bg-white">
-        <div class="container mx-auto px-6 text-center">
-            <h2 class="text-4xl font-bold mb-20 underline decoration-blue-500 decoration-4 underline-offset-8 italic">Professional Services</h2>
-            
-            <div class="grid md:grid-cols-4 gap-6 mb-20">
-                <div class="p-8 rounded-3xl bg-slate-50 border border-slate-100">
-                    <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6"><i data-lucide="search"></i></div>
-                    <h3 class="font-bold mb-2 text-lg">시력 검사</h3>
-                    <p class="text-slate-500 text-sm">정밀 검안 장비 측정</p>
-                </div>
-                <div class="p-8 rounded-3xl bg-slate-50 border border-slate-100">
-                    <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6"><i data-lucide="message-circle"></i></div>
-                    <h3 class="font-bold mb-2 text-lg">라이프 상담</h3>
-                    <p class="text-slate-500 text-sm">생활 환경 분석</p>
-                </div>
-                <div class="p-8 rounded-3xl bg-slate-50 border border-slate-100">
-                    <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6"><i data-lucide="settings"></i></div>
-                    <h3 class="font-bold mb-2 text-lg">맞춤 추천</h3>
-                    <p class="text-slate-500 text-sm">최적의 렌즈 설계</p>
-                </div>
-                <div class="p-8 rounded-3xl bg-slate-50 border border-slate-100">
-                    <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6"><i data-lucide="maximize-2"></i></div>
-                    <h3 class="font-bold mb-2 text-lg">정밀 피팅</h3>
-                    <p class="text-slate-500 text-sm">완벽한 착용감 구현</p>
-                </div>
-            </div>
+    <!-- 숨겨진 요소: 실시간 스트림 처리를 위한 비디오와 캔버스 -->
+    <video id="screen-video" autoplay playsinline></video>
+    <canvas id="hidden-canvas"></canvas>
 
-            <div class="bg-blue-600 rounded-[40px] p-10 md:p-16 text-white text-left flex flex-col md:flex-row items-center justify-between gap-10">
-                <div class="max-w-xl">
-                    <h3 class="text-3xl font-bold mb-6 flex items-center gap-3"><i data-lucide="user"></i> 1:1 정밀 피팅 서비스</h3>
-                    <p class="text-white/80 leading-relaxed text-lg">안경은 도수만큼 '피팅'이 중요합니다. 얼굴형, 귀 높이, 코 모양을 분석하여 흘러내리지 않는 편안함을 약속합니다.</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-white/10 p-4 rounded-2xl border border-white/20 text-center">얼굴형 분석</div>
-                    <div class="bg-white/10 p-4 rounded-2xl border border-white/20 text-center">귀 높이 측정</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- --- LOCATION & BOOKING --- -->
-    <section id="location" class="py-24 bg-slate-900 text-white">
-        <div class="container mx-auto px-6">
-            <div class="grid lg:grid-cols-2 gap-16">
-                <!-- Booking -->
-                <div class="bg-white text-slate-900 p-10 rounded-[40px] shadow-2xl">
-                    <h2 class="text-3xl font-bold mb-8 text-blue-600 flex items-center gap-3"><i data-lucide="calendar"></i> 방문 예약</h2>
-                    <form class="space-y-6">
-                        <div><label class="block text-sm font-bold mb-2">성함</label><input type="text" class="w-full p-4 rounded-xl bg-slate-50 outline-none border focus:border-blue-500"></div>
-                        <div><label class="block text-sm font-bold mb-2">연락처</label><input type="tel" class="w-full p-4 rounded-xl bg-slate-50 outline-none border focus:border-blue-500"></div>
-                        <div><label class="block text-sm font-bold mb-2">방문 일자</label><input type="date" class="w-full p-4 rounded-xl bg-slate-50 outline-none border focus:border-blue-500"></div>
-                        <button class="w-full bg-blue-600 text-white py-5 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all">예약 신청하기</button>
-                    </form>
-                </div>
-                <!-- Info -->
-                <div class="flex flex-col justify-center">
-                    <h2 class="text-4xl font-bold mb-10">찾아오시는 길</h2>
-                    <div class="space-y-6 mb-12">
-                        <div class="flex items-start gap-4"><i data-lucide="map-pin" class="text-blue-500"></i><div><h4 class="font-bold">위치</h4><p class="text-white/60">서울시 구로구 디지털로 243</p></div></div>
-                        <div class="flex items-start gap-4"><i data-lucide="phone" class="text-blue-500"></i><div><h4 class="font-bold">연락처</h4><p class="text-white/60">02-362-4680</p></div></div>
-                        <div class="flex items-start gap-4"><i data-lucide="clock" class="text-blue-500"></i><div><h4 class="font-bold">운영 시간</h4><p class="text-white/60">평일 09:00 - 19:00</p></div></div>
-                    </div>
-                    <div class="aspect-video bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center"><p class="text-white/40">구글 맵 연동 영역</p></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- --- FOOTER --- -->
-    <footer class="py-10 bg-slate-900 border-t border-white/5 text-center text-white/40 text-sm">
-        <p>© 2026 성민안경. All rights reserved.</p>
-    </footer>
+    <button onclick="toggleAIChat()" id="ai-trigger" class="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-2xl z-[90] flex items-center justify-center hover:scale-110 transition-all">
+        <i data-lucide="sparkles"></i>
+    </button>
 
     <script>
-        // Initialize Lucide Icons
         lucide.createIcons();
+        const apiKey = ""; 
+        let screenStream = null;
+        const video = document.getElementById('screen-video');
+        const canvas = document.getElementById('hidden-canvas');
 
-        // Scroll Event for Header
-        const header = document.getElementById('main-header');
-        const logo = document.getElementById('logo');
-        const navLinks = document.querySelectorAll('.nav-link');
-        const menuBtn = document.getElementById('menu-btn');
-
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                header.classList.add('bg-white/90', 'backdrop-blur-md', 'shadow-md', 'py-3');
-                header.classList.remove('py-5');
-                logo.classList.add('text-blue-600');
-                logo.classList.remove('text-white');
-                navLinks.forEach(link => link.classList.replace('text-white/90', 'text-slate-600'));
-                menuBtn.classList.replace('text-white', 'text-blue-600');
-            } else {
-                header.classList.remove('bg-white/90', 'backdrop-blur-md', 'shadow-md', 'py-3');
-                header.classList.add('py-5');
-                logo.classList.remove('text-blue-600');
-                logo.classList.add('text-white');
-                navLinks.forEach(link => link.classList.replace('text-slate-600', 'text-white/90'));
-                menuBtn.classList.replace('text-blue-600', 'text-white');
+        async function startLiveConsulting() {
+            try {
+                // 브라우저 화면 공유 요청
+                screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: "always" },
+                    audio: false
+                });
+                
+                video.srcObject = screenStream;
+                toggleAIChat(true);
+                
+                document.getElementById('live-status').classList.remove('hidden');
+                document.getElementById('status-text').textContent = "화면 분석 준비 완료";
+                
+                // 스트림 종료 시 처리
+                screenStream.getVideoTracks()[0].onended = () => {
+                    stopLiveConsulting();
+                };
+            } catch (err) {
+                console.error("Error: " + err);
+                toggleAIChat(true);
+                const history = document.getElementById('chat-history');
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'chat-bubble chat-ai text-red-500 text-xs';
+                
+                if (err.name === 'NotAllowedError' || err.message.includes('permissions policy')) {
+                    errorMsg.innerHTML = "⚠️ <b>미리보기 환경 제한</b><br>현재 환경에서는 브라우저 보안 정책상 화면 공유가 차단되어 있습니다.<br><br>기능을 테스트하시려면 우측 상단의 코드 복사 버튼을 눌러 코드를 복사한 뒤, <b>index.html 파일로 저장하여 크롬 브라우저 등에서 직접 실행</b>해 주세요.";
+                } else {
+                    errorMsg.innerHTML = "⚠️ 화면 공유 권한이 필요합니다. 브라우저 권한을 허용해 주세요.";
+                }
+                
+                history.appendChild(errorMsg);
+                history.scrollTop = history.scrollHeight;
             }
-        });
-
-        // Mobile Menu Toggle
-        const mobileMenu = document.getElementById('mobile-menu');
-        menuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-
-        // Tab System
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                btn.classList.add('text-slate-500');
-            });
-
-            document.getElementById(tabId).classList.add('active');
-            const activeBtn = document.getElementById('btn-' + tabId);
-            activeBtn.classList.remove('text-slate-500');
-            activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
         }
+
+        function stopLiveConsulting() {
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+                screenStream = null;
+            }
+            document.getElementById('live-status').classList.add('hidden');
+            document.getElementById('status-text').textContent = "화면 공유 중단됨";
+        }
+
+        function captureScreen() {
+            if (!screenStream) return null;
+            
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Base64 데이터 추출
+            return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+        }
+
+        async function askGemini() {
+            const inputField = document.getElementById('ai-input');
+            const history = document.getElementById('chat-history');
+            const userText = inputField.value.trim();
+            const sendBtn = document.getElementById('send-btn');
+
+            if (!userText && !screenStream) {
+                alert("질문을 입력하거나 화면 공유를 먼저 시작해주세요.");
+                return;
+            }
+
+            // 메시지 추가
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-bubble chat-user';
+            userMsg.textContent = userText || "현재 화면 분석해줘.";
+            history.appendChild(userMsg);
+            
+            // 현재 화면 캡처 (실시간성 확보)
+            const currentFrame = captureScreen();
+            
+            inputField.value = '';
+            history.scrollTop = history.scrollHeight;
+            sendBtn.disabled = true;
+
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'chat-bubble chat-ai italic opacity-60';
+            loadingMsg.textContent = '✨ 실시간 화면 분석 중...';
+            history.appendChild(loadingMsg);
+
+            try {
+                let parts = [{ text: userText || "현재 화면의 텍스트를 읽고 질문에 답해줘." }];
+                if (currentFrame) {
+                    parts.push({
+                        inlineData: {
+                            mimeType: "image/jpeg",
+                            data: currentFrame
+                        }
+                    });
+                }
+
+                const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: parts }],
+                        systemInstruction: {
+                            parts: [{ text: "당신은 성민안경의 AI 시각 분석가입니다. 사용자가 공유한 실시간 화면 이미지를 보고, 이미지 속에 있는 문제, 텍스트, 처방전 등을 분석하여 답변하십시오. 사용자가 질문한 내용에 대해 화면의 정보를 근거로 정확한 답을 제시하십시오. 모든 답변은 한국어로 친절하게 작성하십시오." }]
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "분석 결과가 없습니다.";
+
+                history.removeChild(loadingMsg);
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'chat-bubble chat-ai';
+                aiMsg.innerHTML = aiText.replace(/\n/g, '<br>');
+                history.appendChild(aiMsg);
+            } catch (error) {
+                history.removeChild(loadingMsg);
+                console.error(error);
+            } finally {
+                sendBtn.disabled = false;
+                history.scrollTop = history.scrollHeight;
+            }
+        }
+
+        async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) throw new Error('API Error');
+                return res;
+            } catch (err) {
+                if (retries <= 0) throw err;
+                await new Promise(r => setTimeout(r, backoff));
+                return fetchWithRetry(url, options, retries - 1, backoff * 2);
+            }
+        }
+
+        function toggleAIChat(forceOpen = false) {
+            const modal = document.getElementById('ai-chat-modal');
+            const trigger = document.getElementById('ai-trigger');
+            if (forceOpen) modal.classList.add('active');
+            else modal.classList.toggle('active');
+            trigger.style.display = modal.classList.contains('active') ? 'none' : 'flex';
+        }
+
+        document.getElementById('ai-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') askGemini();
+        });
     </script>
 </body>
 </html>
